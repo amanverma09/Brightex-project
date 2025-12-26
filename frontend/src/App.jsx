@@ -12,6 +12,7 @@ import CreateEmployee from "./ceo/CreateEmployee";
 import EmployeeDetails from "./ceo/EmployeeDetails";
 import AssignTask from "./ceo/AssignTask";
 import EmployeeManagement from "./ceo/EmployeeManagement";
+import EmployeeTasks from "./employee/EmployeeTasks";
 
 function App() {
   return (
@@ -101,6 +102,16 @@ function App() {
             <ProtectedRoute role="EMPLOYEE">
               <EmployeeLayout>
                 <EmployeeDashboard />
+              </EmployeeLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/tasks"
+          element={
+            <ProtectedRoute role="EMPLOYEE">
+              <EmployeeLayout>
+                <EmployeeTasks />
               </EmployeeLayout>
             </ProtectedRoute>
           }

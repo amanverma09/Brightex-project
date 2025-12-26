@@ -159,8 +159,8 @@ const EmployeeManagement = () => {
                                         <td className="px-4 py-2 text-center">
                                             <span
                                                 className={`px-2 py-0.5 rounded-full text-[10px] ${e.status === "ACTIVE"
-                                                        ? "bg-emerald-500/20 text-emerald-400"
-                                                        : "bg-red-500/20 text-red-400"
+                                                    ? "bg-emerald-500/20 text-emerald-400"
+                                                    : "bg-red-500/20 text-red-400"
                                                     }`}
                                             >
                                                 {e.status}
@@ -174,24 +174,14 @@ const EmployeeManagement = () => {
                                             >
                                                 Edit
                                             </button>
-                                            <button
-                                                onClick={() => toggleStatus(e._id, e.status)}
-                                                className="text-[10px] px-2 py-0.5 bg-slate-700 rounded"
-                                            >
-                                                {e.status === "ACTIVE" ? "Block" : "Unblock"}
-                                            </button>
+
                                             <button
                                                 onClick={() => deleteEmployee(e._id)}
                                                 className="text-[10px] px-2 py-0.5 bg-red-600/70 rounded"
                                             >
                                                 Delete
                                             </button>
-                                            <button
-                                                onClick={() => loadTasks(e._id)}
-                                                className="text-[10px] px-2 py-0.5 bg-slate-700 rounded"
-                                            >
-                                                Tasks
-                                            </button>
+
                                         </td>
                                     </tr>
                                 ))}

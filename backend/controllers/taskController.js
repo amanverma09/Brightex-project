@@ -218,3 +218,46 @@ export const getPendingTasksForCEO = async (req, res) => {
     });
   }
 };
+
+
+
+export const reassignTask = async (req, res) => {
+  const { taskId } = req.params;
+  const { newDeadline, reason } = req.body;
+
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    return res.status(404).json({ message: "Task not found" });
+  }
+
+  if (task.isLocked) {
+    return res.status(403).json({
+      message: "Task is locked after 3 reassignments",
+    });
+  }
+
+  // Save history
+  task.reassignHistory.push({
+    oldDeadline: task.deadline,
+    newDeadline,
+    reassignedBy: req.user.id,
+    reason,
+  });
+
+  task.deadline = newDeadline;
+  task.rescheduledCount += 1;
+
+  if (task.rescheduledCount >= 3) {
+    task.status = "FAILED";
+    task.isLocked = true;
+  }
+
+  await task.save();
+
+  res.status(200).json({
+    message: "Task reassigned successfully",
+    task,
+  });
+};
+

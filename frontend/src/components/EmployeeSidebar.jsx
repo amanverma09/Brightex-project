@@ -1,35 +1,40 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
-const EmployeeSidebar = () => {
-  const navigate = useNavigate();
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    navigate("/");
-  };
-
+const EmployeeSidebar = ({ open, onClose }) => {
   const linkClass = "block px-4 py-2 rounded-lg text-sm hover:bg-slate-700";
 
   return (
-    <div className="w-60 min-h-screen bg-slate-800 border-r border-slate-700 p-4">
-      <h2 className="text-xl font-semibold text-emerald-400 mb-6">
-        Brightex Employee
-      </h2>
+    <>
+      {open && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+        />
+      )}
 
-      <nav className="space-y-2">
-        <NavLink to="/employee/dashboard" className={linkClass}>
-          My Tasks
-        </NavLink>
-      </nav>
-
-      <button
-        onClick={logout}
-        className="mt-10 w-full px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"
+      <aside
+        className={`fixed md:static z-50 md:z-auto
+        w-60 min-h-screen bg-slate-800 border-r border-slate-700 p-4
+        transform transition-transform duration-300
+        ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
-        Logout
-      </button>
-    </div>
+        <h2 className="text-xl font-semibold text-emerald-400 mb-6">
+          Brightex Employee
+        </h2>
+
+        <nav className="space-y-2">
+          <NavLink to="/employee/dashboard" className={linkClass}>
+            Dashboard
+          </NavLink>
+          <NavLink to="/employee/tasks" className={linkClass}>
+            My Tasks
+          </NavLink>
+        </nav>
+
+
+
+      </aside>
+    </>
   );
 };
 
