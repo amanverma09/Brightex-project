@@ -6,6 +6,7 @@ import {
   getMyTasks,
   getPendingTasksForCEO,
   reassignTask,
+  referTask,
   updateTaskStatus,
 } from "../controllers/taskController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
@@ -34,4 +35,7 @@ router.get("/ceo/all", verifyToken, isCEO, getAllTasksForCEO);
 
 // CEO pending work (overdue tasks)
 router.get("/ceo/pending", verifyToken, isCEO, getPendingTasksForCEO);
+
+// Employee refers task
+router.patch("/:taskId/refer", verifyToken, isEmployee, referTask);
 export default router;

@@ -68,6 +68,21 @@ const taskSchema = new mongoose.Schema(
         reason: String,
       },
     ],
+
+    // new update by aman
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    reassignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    reassignedDeadline: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

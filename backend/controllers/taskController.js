@@ -261,3 +261,40 @@ export const reassignTask = async (req, res) => {
   });
 };
 
+/* -----------------------------------------------
+   EMPLOYEE — REFER TASK
+------------------------------------------------ */
+export const referTask = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { newEmployeeId, newDeadline } = req.body;
+
+    const task = await Task.findById(taskId);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    if (task.assignedTo.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    const employee = await User.findOne({
+      _id: newEmployeeId,
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+    });
+
+    if (!employee) return res.status(404).json({ message: "Target not found" });
+
+    task.referredBy = req.user.id;
+    task.assignedTo = newEmployeeId;
+    task.deadline = newDeadline;
+
+    await task.save();
+
+    res.status(200).json({
+      message: "Task referred",
+      task,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
