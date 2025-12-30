@@ -141,10 +141,6 @@ export const employeeLogin = async (req, res) => {
   }
 };
 
-
-
-
-
 /* ================= AUTH USER ================= */
 export const getAuthenticatedUser = async (req, res) => {
   try {
@@ -167,8 +163,6 @@ export const getAuthenticatedUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 /* ================= UPDATE AUTHENTICATED USER ================= */
 export const updateProfile = async (req, res) => {

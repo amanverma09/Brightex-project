@@ -70,19 +70,17 @@ export const getMyTasks = async (req, res) => {
     const employeeId = req.user.id;
 
     const tasks = await Task.find({ assignedTo: employeeId })
-      .select("-__v")
-      .sort({ deadline: 1, priority: -1 });
+      .populate("assignedBy", "name email")
+      .populate("referredBy", "name email")
+      .sort({ deadline: 1 });
 
-    res.status(200).json({
-      message: "My tasks fetched successfully",
+    return res.status(200).json({
+      message: "My tasks fetched",
       count: tasks.length,
       tasks,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -219,8 +217,6 @@ export const getPendingTasksForCEO = async (req, res) => {
   }
 };
 
-
-
 export const reassignTask = async (req, res) => {
   const { taskId } = req.params;
   const { newDeadline, reason } = req.body;
@@ -273,16 +269,15 @@ export const referTask = async (req, res) => {
     if (!task) return res.status(404).json({ message: "Task not found" });
 
     if (task.assignedTo.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not allowed" });
+      return res.status(403).json({ message: "Not allowed to refer" });
     }
 
-    const employee = await User.findOne({
+    const emp = await User.findOne({
       _id: newEmployeeId,
       role: "EMPLOYEE",
       status: "ACTIVE",
     });
-
-    if (!employee) return res.status(404).json({ message: "Target not found" });
+    if (!emp) return res.status(404).json({ message: "Employee not found" });
 
     task.referredBy = req.user.id;
     task.assignedTo = newEmployeeId;
@@ -290,11 +285,16 @@ export const referTask = async (req, res) => {
 
     await task.save();
 
-    res.status(200).json({
+    const updatedTask = await Task.findById(taskId)
+      .populate("assignedBy", "name email")
+      .populate("referredBy", "name email")
+      .populate("assignedTo", "name email");
+
+    return res.status(200).json({
       message: "Task referred",
-      task,
+      task: updatedTask,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Error", error: error.message });
   }
 };

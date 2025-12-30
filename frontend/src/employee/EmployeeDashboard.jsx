@@ -13,9 +13,7 @@ const statusColors = {
 const StatCard = ({ title, value, color }) => (
   <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
     <p className="text-sm text-slate-400">{title}</p>
-    <p className={`text-2xl font-semibold mt-1 ${color}`}>
-      {value}
-    </p>
+    <p className={`text-2xl font-semibold mt-1 ${color}`}>{value}</p>
   </div>
 );
 
@@ -40,15 +38,15 @@ const EmployeeDashboard = () => {
       const res = await api.get("/tasks/my");
       const tasksData = res.data.tasks || [];
       setTasks(tasksData);
-
+      console.log("Single First Task =>", tasksData[0]);
+      console.log("Assigned By =>", tasksData[0]?.assignedBy?.name);
       // ---- Stats calculation ----
       const total = tasksData.length;
       const completed = tasksData.filter(
         (t) => t.status === "COMPLETED"
       ).length;
       const pending = total - completed;
-      const accuracy =
-        total === 0 ? 0 : Math.round((completed / total) * 100);
+      const accuracy = total === 0 ? 0 : Math.round((completed / total) * 100);
 
       setStats({ total, completed, pending, accuracy });
     } catch (err) {
@@ -115,7 +113,7 @@ const EmployeeDashboard = () => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/employee-login");
+    navigate("/");
   };
 
   useEffect(() => {
@@ -141,20 +139,32 @@ const EmployeeDashboard = () => {
       <div className="p-6 max-w-6xl mx-auto space-y-10">
         {/* ===== STATS ===== */}
         <div>
-          <h2 className="text-lg font-medium mb-4">
-            Performance Overview
-          </h2>
+          <h2 className="text-lg font-medium mb-4">Performance Overview</h2>
 
-          {loading && (
-            <p className="text-slate-400">Loading stats...</p>
-          )}
+          {loading && <p className="text-slate-400">Loading stats...</p>}
 
           {stats && (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-              <StatCard title="Total Tasks" value={stats.total} color="text-slate-100" />
-              <StatCard title="Completed" value={stats.completed} color="text-emerald-400" />
-              <StatCard title="Pending" value={stats.pending} color="text-yellow-400" />
-              <StatCard title="Accuracy" value={`${stats.accuracy}%`} color="text-sky-400" />
+              <StatCard
+                title="Total Tasks"
+                value={stats.total}
+                color="text-slate-100"
+              />
+              <StatCard
+                title="Completed"
+                value={stats.completed}
+                color="text-emerald-400"
+              />
+              <StatCard
+                title="Pending"
+                value={stats.pending}
+                color="text-yellow-400"
+              />
+              <StatCard
+                title="Accuracy"
+                value={`${stats.accuracy}%`}
+                color="text-sky-400"
+              />
             </div>
           )}
         </div>
@@ -184,7 +194,9 @@ const EmployeeDashboard = () => {
                   </p>
 
                   <span
-                    className={`inline-block px-3 py-1 text-xs rounded-full ${statusColors[task.status]}`}
+                    className={`inline-block px-3 py-1 text-xs rounded-full ${
+                      statusColors[task.status]
+                    }`}
                   >
                     {task.status.replace("_", " ")}
                   </span>
@@ -200,12 +212,12 @@ const EmployeeDashboard = () => {
                     </p>
                   )}
 
-                  <div className="mt-4 space-x-2">
+                  <div className="mt-4 flex gap-2 ">
                     {["PENDING", "IN_PROGRESS", "COMPLETED"].map((s) => (
                       <button
                         key={s}
                         onClick={() => updateStatus(task._id, s)}
-                        className="text-xs px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600"
+                        className="text-xs px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600"
                       >
                         {s.replace("_", " ")}
                       </button>
@@ -242,9 +254,7 @@ const EmployeeDashboard = () => {
               Refer: {selectedTask?.title}
             </h2>
 
-            <label className="block text-sm mb-1">
-              Refer To (Employee)
-            </label>
+            <label className="block text-sm mb-1">Refer To (Employee)</label>
             <select
               className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg mb-3"
               value={referEmployee}
@@ -267,9 +277,7 @@ const EmployeeDashboard = () => {
             />
 
             {referMessage && (
-              <p className="text-sm text-emerald-400 mb-2">
-                {referMessage}
-              </p>
+              <p className="text-sm text-emerald-400 mb-2">{referMessage}</p>
             )}
 
             <button
