@@ -125,7 +125,6 @@
 //   }
 // };
 
-
 // // new update by Aman
 // export const getEmployeesForRefer = async (req, res) => {
 //   try {
@@ -148,10 +147,6 @@
 //       .json({ message: "Could not load target", error: error.message });
 //   }
 // };
-
-
-
-
 
 import Task from "../models/Task.js";
 import User from "../models/User.js";

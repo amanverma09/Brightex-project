@@ -17,9 +17,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/ceo", ceoRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/tasks", taskRoutes);
-app.get("/test", (req, res) => {
-  res.send("Welcome to the Brightex API");
-});
 
 connectDB();
 const PORT = process.env.PORT || 2000;

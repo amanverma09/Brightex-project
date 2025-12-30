@@ -23,9 +23,7 @@ router.get("/my", verifyToken, isEmployee, getMyTasks);
 // Employee updates task status
 router.patch("/:taskId/status", verifyToken, isEmployee, updateTaskStatus);
 
-router.patch(
-  "/:taskId/reassign", verifyToken, isCEO, reassignTask
-);
+router.patch("/:taskId/reassign", verifyToken, isCEO, reassignTask);
 
 // CEO task dashboard
 router.get("/ceo/dashboard", verifyToken, isCEO, ceoTaskDashboard);

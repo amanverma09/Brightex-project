@@ -18,8 +18,6 @@
 // router.get("/", verifyToken, isCEO, getAllEmployees);
 // export default router;
 
-
-
 import express from "express";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { isCEO, isEmployee } from "../middleware/roleMiddleware.js";
