@@ -32,16 +32,6 @@ function App() {
           }
         />
 
-        {/* <Route
-          path="/ceo/employees"
-          element={
-            <ProtectedRoute role="CEO">
-              <CeoLayout>
-                <EmployeeList />
-              </CeoLayout>
-            </ProtectedRoute>
-          }
-        /> */}
         <Route
           path="/ceo/employees"
           element={
