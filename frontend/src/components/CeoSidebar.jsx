@@ -33,7 +33,7 @@ const CeoSidebar = ({ open, onClose }) => {
             Assign Task
           </NavLink>
           <NavLink to="/ceo/pending" className={linkClass}>
-            Pending Work
+            Overdue/Pending Work
           </NavLink>
         </nav>
       </aside>

@@ -193,21 +193,77 @@ export const getAllTasksForCEO = async (req, res) => {
   }
 };
 
-export const getPendingTasksForCEO = async (req, res) => {
+// export const getPendingTasksForCEO = async (req, res) => {
+//   try {
+//     const today = new Date();
+
+//     const pendingTasks = await Task.find({
+//       deadline: { $lt: today },
+//       status: { $ne: "COMPLETED" },
+//     })
+//       .populate("assignedTo", "name email")
+//       .sort({ deadline: 1 });
+
+//     res.status(200).json({
+//       message: "Pending (overdue) tasks fetched successfully",
+//       count: pendingTasks.length,
+//       tasks: pendingTasks,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       message: "Server error",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// CEO → Overdue tasks
+export const getOverdueTasksForCEO = async (req, res) => {
   try {
     const today = new Date();
 
-    const pendingTasks = await Task.find({
+    const tasks = await Task.find({
       deadline: { $lt: today },
       status: { $ne: "COMPLETED" },
     })
       .populate("assignedTo", "name email")
+      .populate("assignedBy", "name email")
       .sort({ deadline: 1 });
 
     res.status(200).json({
-      message: "Pending (overdue) tasks fetched successfully",
-      count: pendingTasks.length,
-      tasks: pendingTasks,
+      message: "Overdue tasks fetched",
+      count: tasks.length,
+      tasks,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+// CEO → Get tasks by status (PENDING / IN_PROGRESS / COMPLETED)
+export const getTasksByStatusForCEO = async (req, res) => {
+  try {
+    const { status } = req.params;
+
+    const allowedStatus = ["PENDING", "IN_PROGRESS", "COMPLETED"];
+    if (!allowedStatus.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid task status",
+      });
+    }
+
+    const tasks = await Task.find({ status })
+      .populate("assignedTo", "name email")
+      .populate("assignedBy", "name email")
+      .sort({ deadline: 1 });
+
+    res.status(200).json({
+      message: `${status} tasks fetched successfully`,
+      count: tasks.length,
+      tasks,
     });
   } catch (error) {
     res.status(500).json({

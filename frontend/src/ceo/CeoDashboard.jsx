@@ -9,8 +9,11 @@ const badgeColors = {
 };
 
 /* ================== OVERVIEW CARD ================== */
-const Card = ({ title, value }) => (
-  <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+const Card = ({ title, value, onClick }) => (
+  <div
+    onClick={onClick}
+    className="bg-slate-800 border border-slate-700 rounded-xl p-5 cursor-pointer hover:border-sky-500 transition"
+  >
     <p className="text-sm text-slate-400">{title}</p>
     <p className="text-2xl font-semibold text-slate-100 mt-1">{value}</p>
   </div>
@@ -20,28 +23,36 @@ const Card = ({ title, value }) => (
 const CeoDashboard = () => {
   const [overview, setOverview] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
 
-  /* ================== FETCH DASHBOARD DATA ================== */
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
+  /* ================== FETCH OVERVIEW ================== */
+  const fetchOverview = async () => {
+    const res = await api.get("/tasks/ceo/dashboard");
+    setOverview(res.data.dashboard);
+  };
 
-      const overviewRes = await api.get("/tasks/ceo/dashboard");
-      const tasksRes = await api.get("/tasks/ceo/all");
+  /* ================== FETCH TASKS BASED ON FILTER ================== */
+  const fetchTasks = async (filter = "ALL") => {
+    setLoading(true);
+    setActiveFilter(filter);
 
-      setOverview(overviewRes.data.dashboard);
-      setTasks(tasksRes.data.tasks || []);
-    } catch (err) {
-      console.error("Dashboard fetch failed", err);
-    } finally {
-      setLoading(false);
-    }
+    let url = "/tasks/ceo/all";
+
+    // if (filter === "PENDING") url = "/tasks/ceo/pending";
+    if (filter === "IN_PROGRESS") url = "/tasks/ceo/status/IN_PROGRESS";
+    if (filter === "COMPLETED") url = "/tasks/ceo/status/COMPLETED";
+    if (filter === "OVERDUE") url = "/tasks/ceo/overdue";
+
+    const res = await api.get(url);
+    setTasks(res.data.tasks || []);
+    setLoading(false);
   };
 
   /* ================== ON LOAD ================== */
   useEffect(() => {
-    fetchDashboardData();
+    fetchOverview();
+    fetchTasks("ALL");
   }, []);
 
   /* ================== UI ================== */
@@ -52,22 +63,46 @@ const CeoDashboard = () => {
 
       {loading && <p className="text-slate-400">Loading dashboard...</p>}
 
-      {overview && !loading && (
+      {overview && (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          <Card title="Total Tasks" value={overview.totalTasks} />
-          <Card title="Pending" value={overview.pendingTasks} />
-          <Card title="In Progress" value={overview.inProgressTasks} />
-          <Card title="Completed" value={overview.completedTasks} />
-          <Card title="Overdue" value={overview.overdueTasks} />
+          <Card
+            title="Total Tasks"
+            value={overview.totalTasks}
+            onClick={() => fetchTasks("ALL")}
+          />
+          {/* <Card
+            title="Pending"
+            value={overview.pendingTasks}
+            onClick={() => fetchTasks("PENDING")}
+          /> */}
+          <Card
+            title="In Progress"
+            value={overview.inProgressTasks}
+            onClick={() => fetchTasks("IN_PROGRESS")}
+          />
+          <Card
+            title="Completed"
+            value={overview.completedTasks}
+            onClick={() => fetchTasks("COMPLETED")}
+          />
+          <Card
+            title="Overdue/pending"
+            value={overview.overdueTasks}
+            onClick={() => fetchTasks("OVERDUE")}
+          />
         </div>
       )}
 
       {/* TASKS */}
-      <h2 className="text-lg font-medium mt-8 mb-4">All Tasks</h2>
+      <h2 className="text-lg font-medium mt-8 mb-4">
+        {activeFilter === "ALL"
+          ? "All Tasks"
+          : `${activeFilter.replace("_", " ")} Tasks`}
+      </h2>
 
       {!loading && tasks.length === 0 && (
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-slate-400">
-          No tasks created yet
+          No tasks found
         </div>
       )}
 
@@ -91,9 +126,9 @@ const CeoDashboard = () => {
                 </td>
                 <td className="px-4 py-3">
                   <span
-                    className={`px-3 py-1 text-xs rounded-full ${badgeColors[t.status] ||
-                      "bg-slate-500/20 text-slate-300"
-                      }`}
+                    className={`px-3 py-1 text-xs rounded-full ${
+                      badgeColors[t.status] || "bg-slate-500/20 text-slate-300"
+                    }`}
                   >
                     {t.status.replace("_", " ")}
                   </span>
@@ -123,9 +158,9 @@ const CeoDashboard = () => {
 
             <div className="flex items-center justify-between mt-3">
               <span
-                className={`px-3 py-1 text-xs rounded-full ${badgeColors[t.status] ||
-                  "bg-slate-500/20 text-slate-300"
-                  }`}
+                className={`px-3 py-1 text-xs rounded-full ${
+                  badgeColors[t.status] || "bg-slate-500/20 text-slate-300"
+                }`}
               >
                 {t.status.replace("_", " ")}
               </span>
@@ -145,11 +180,7 @@ const CeoDashboard = () => {
 
 export default CeoDashboard;
 
-
-
 // new update by aman
-
-
 
 // import { useEffect, useState } from "react";
 // import api from "../api/api";

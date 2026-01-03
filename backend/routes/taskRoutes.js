@@ -4,7 +4,8 @@ import {
   ceoTaskDashboard,
   getAllTasksForCEO,
   getMyTasks,
-  getPendingTasksForCEO,
+  getOverdueTasksForCEO,
+  getTasksByStatusForCEO,
   reassignTask,
   referTask,
   updateTaskStatus,
@@ -31,9 +32,16 @@ router.get("/ceo/dashboard", verifyToken, isCEO, ceoTaskDashboard);
 // CEO views all tasks
 router.get("/ceo/all", verifyToken, isCEO, getAllTasksForCEO);
 
+// ✅ NEW: CEO → tasks by status
+router.get("/ceo/status/:status", verifyToken, isCEO, getTasksByStatusForCEO);
+
+// CEO → overdue tasks
+router.get("/ceo/overdue", verifyToken, isCEO, getOverdueTasksForCEO);
+
 // CEO pending work (overdue tasks)
-router.get("/ceo/pending", verifyToken, isCEO, getPendingTasksForCEO);
+// router.get("/ceo/pending", verifyToken, isCEO, getPendingTasksForCEO);
 
 // Employee refers task
 router.patch("/:taskId/refer", verifyToken, isEmployee, referTask);
+
 export default router;

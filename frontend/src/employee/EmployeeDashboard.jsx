@@ -10,8 +10,11 @@ const statusColors = {
 };
 
 /* ================= STAT CARD ================= */
-const StatCard = ({ title, value, color }) => (
-  <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+const StatCard = ({ title, value, color, onClick }) => (
+  <div
+    onClick={onClick}
+    className="bg-slate-800 border border-slate-700 rounded-xl p-5 cursor-pointer hover:border-sky-500 transition"
+  >
     <p className="text-sm text-slate-400">{title}</p>
     <p className={`text-2xl font-semibold mt-1 ${color}`}>{value}</p>
   </div>
@@ -19,11 +22,13 @@ const StatCard = ({ title, value, color }) => (
 
 const EmployeeDashboard = () => {
   const [tasks, setTasks] = useState([]);
+  const [filteredTasks, setFilteredTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
+  const [activeFilter, setActiveFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
 
-  // Refer modal states
+  /* ===== REFER MODAL ===== */
   const [showReferModal, setShowReferModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [referEmployee, setReferEmployee] = useState("");
@@ -32,23 +37,24 @@ const EmployeeDashboard = () => {
 
   const navigate = useNavigate();
 
-  /* ================= FETCH TASKS + STATS ================= */
+  /* ================= FETCH TASKS ================= */
   const fetchTasks = async () => {
     try {
+      setLoading(true);
       const res = await api.get("/tasks/my");
-      const tasksData = res.data.tasks || [];
-      setTasks(tasksData);
-      console.log("Single First Task =>", tasksData[0]);
-      console.log("Assigned By =>", tasksData[0]?.assignedBy?.name);
-      // ---- Stats calculation ----
-      const total = tasksData.length;
-      const completed = tasksData.filter(
-        (t) => t.status === "COMPLETED"
-      ).length;
-      const pending = total - completed;
-      const accuracy = total === 0 ? 0 : Math.round((completed / total) * 100);
+      const data = res.data.tasks || [];
 
-      setStats({ total, completed, pending, accuracy });
+      setTasks(data);
+      setFilteredTasks(data);
+
+      const total = data.length;
+      const completed = data.filter((t) => t.status === "COMPLETED").length;
+      const overdue = data.filter(
+        (t) => new Date(t.deadline) < new Date() && t.status !== "COMPLETED"
+      ).length;
+
+      const accuracy = total === 0 ? 0 : Math.round((completed / total) * 100);
+      setStats({ total, completed, overdue, accuracy });
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,13 +62,34 @@ const EmployeeDashboard = () => {
     }
   };
 
-  /* ================= FETCH EMPLOYEES (REFER) ================= */
+  /* ================= FILTER LOGIC ================= */
+  const applyFilter = (type) => {
+    setActiveFilter(type);
+
+    if (type === "ALL") {
+      setFilteredTasks(tasks);
+    }
+
+    if (type === "COMPLETED") {
+      setFilteredTasks(tasks.filter((t) => t.status === "COMPLETED"));
+    }
+
+    if (type === "OVERDUE") {
+      setFilteredTasks(
+        tasks.filter(
+          (t) => new Date(t.deadline) < new Date() && t.status !== "COMPLETED"
+        )
+      );
+    }
+  };
+
+  /* ================= FETCH EMPLOYEES ================= */
   const fetchEmployees = async () => {
     try {
       const res = await api.get("/employees/basic-list");
       setEmployees(res.data.employees || []);
     } catch (err) {
-      console.error("Failed to load employees:", err);
+      console.error(err);
     }
   };
 
@@ -71,8 +98,8 @@ const EmployeeDashboard = () => {
     try {
       await api.patch(`/tasks/${taskId}/status`, { status });
       fetchTasks();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -97,22 +124,19 @@ const EmployeeDashboard = () => {
         newEmployeeId: referEmployee,
         newDeadline,
       });
-
-      setReferMessage("Task successfully referred 🙌");
+      setReferMessage("Task referred successfully");
       setTimeout(() => {
         setShowReferModal(false);
         fetchTasks();
-      }, 1000);
+      }, 800);
     } catch (err) {
-      console.error(err);
       setReferMessage("❌ Failed to refer task");
+      console.error(err);
     }
   };
 
-  /* ================= LOGOUT ================= */
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
+    localStorage.clear();
     navigate("/");
   };
 
@@ -120,133 +144,115 @@ const EmployeeDashboard = () => {
     fetchTasks();
   }, []);
 
+  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200">
-      {/* ================= HEADER ================= */}
-      {/* <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
-        <h1 className="text-xl font-semibold text-emerald-400">
-          Employee Dashboard
-        </h1>
-        <button
-          onClick={logout}
-          className="text-sm px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600"
-        >
-          Logout
-        </button>
-      </div> */}
-
-      {/* ================= CONTENT ================= */}
       <div className="p-6 max-w-6xl mx-auto space-y-10">
         {/* ===== STATS ===== */}
-        <div>
-          <h2 className="text-lg font-medium mb-4">Performance Overview</h2>
-
-          {loading && <p className="text-slate-400">Loading stats...</p>}
-
-          {stats && (
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-              <StatCard
-                title="Total Tasks"
-                value={stats.total}
-                color="text-slate-100"
-              />
-              <StatCard
-                title="Completed"
-                value={stats.completed}
-                color="text-emerald-400"
-              />
-              <StatCard
-                title="Pending"
-                value={stats.pending}
-                color="text-yellow-400"
-              />
-              <StatCard
-                title="Accuracy"
-                value={`${stats.accuracy}%`}
-                color="text-sky-400"
-              />
-            </div>
-          )}
-        </div>
+        {stats && (
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+            <StatCard
+              title="Total Tasks"
+              value={stats.total}
+              color="text-slate-100"
+              onClick={() => applyFilter("ALL")}
+            />
+            <StatCard
+              title="Completed"
+              value={stats.completed}
+              color="text-emerald-400"
+              onClick={() => applyFilter("COMPLETED")}
+            />
+            <StatCard
+              title="Overdue"
+              value={stats.overdue}
+              color="text-red-400"
+              onClick={() => applyFilter("OVERDUE")}
+            />
+            <StatCard
+              title="Accuracy"
+              value={`${stats.accuracy}%`}
+              color="text-sky-400"
+            />
+          </div>
+        )}
 
         {/* ===== TASKS ===== */}
-        <div>
-          <h2 className="text-lg font-medium mb-4">My Tasks</h2>
+        <h2 className="text-lg font-medium">
+          {activeFilter === "ALL" ? "All Tasks" : `${activeFilter} Tasks`}
+        </h2>
 
-          {!loading && tasks.length === 0 && (
-            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-slate-400">
-              🎉 No tasks assigned yet
-            </div>
-          )}
+        {loading && <p className="text-slate-400">Loading tasks...</p>}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {tasks.map((task) => (
-              <div
-                key={task._id}
-                className="bg-slate-800 border border-slate-700 rounded-xl p-5 flex flex-col justify-between"
-              >
-                <div>
-                  <h3 className="font-semibold text-slate-100 mb-1">
-                    {task.title}
-                  </h3>
-                  <p className="text-sm text-slate-400 mb-3">
-                    {task.description}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredTasks.map((task) => (
+            <div
+              key={task._id}
+              className="bg-slate-800 border border-slate-700 rounded-xl p-5 flex flex-col justify-between"
+            >
+              <div>
+                <h3 className="font-semibold text-slate-100 mb-1">
+                  {task.title}
+                </h3>
+
+                <p className="text-sm text-slate-400 mb-3">
+                  {task.description}
+                </p>
+
+                <span
+                  className={`inline-block px-3 py-1 text-xs rounded-full ${
+                    statusColors[task.status]
+                  }`}
+                >
+                  {task.status.replace("_", " ")}
+                </span>
+
+                {task.assignedBy?.name && (
+                  <p className="text-xs text-blue-300 mt-1">
+                    Assigned by: {task.assignedBy.name}
                   </p>
-
-                  <span
-                    className={`inline-block px-3 py-1 text-xs rounded-full ${
-                      statusColors[task.status]
-                    }`}
-                  >
-                    {task.status.replace("_", " ")}
-                  </span>
-
-                  {task.assignedBy?.name && (
-                    <p className="text-xs text-blue-300 mt-1">
-                      Assigned by: {task.assignedBy.name}
-                    </p>
-                  )}
-                  {task.referredBy?.name && (
-                    <p className="text-xs text-orange-300 mt-1">
-                      Referred by: {task.referredBy.name}
-                    </p>
-                  )}
-
-                  <div className="mt-4 flex gap-2 ">
-                    {["PENDING", "IN_PROGRESS", "COMPLETED"].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => updateStatus(task._id, s)}
-                        className="text-xs px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600"
-                      >
-                        {s.replace("_", " ")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-4 text-xs text-slate-400">
-                  Deadline:{" "}
-                  <span className="text-slate-300">
-                    {new Date(task.deadline).toLocaleDateString()}
-                  </span>
-                </div>
-
-                {task.status !== "COMPLETED" && (
-                  <button
-                    onClick={() => openReferModal(task)}
-                    className="text-xs mt-3 px-3 py-2 rounded-lg bg-orange-500/20 text-orange-400 hover:bg-orange-500/30"
-                  >
-                    Refer Task ➝
-                  </button>
                 )}
+
+                {task.referredBy?.name && (
+                  <p className="text-xs text-orange-300 mt-1">
+                    Referred by: {task.referredBy.name}
+                  </p>
+                )}
+
+                <div className="mt-4 flex gap-2">
+                  {["IN_PROGRESS", "COMPLETED"].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => updateStatus(task._id, s)}
+                      className="text-xs px-3 py-1 rounded-lg cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-600"
+                    >
+                      {s.replace("_", " ")}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="mt-4 text-xs text-slate-400">
+                Deadline:{" "}
+                <span className="text-slate-300">
+                  {new Date(task.deadline).toLocaleDateString()}
+                </span>
+              </div>
+
+              {task.status !== "COMPLETED" && (
+                <button
+                  onClick={() => openReferModal(task)}
+                  className="text-xs mt-3 px-3 py-2 rounded-lg cursor-pointer bg-orange-500/20 text-orange-400 hover:bg-orange-500/30"
+                >
+                  Refer Task ➝
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ================= REFER MODAL ================= */}
+      {/* ===== REFER MODAL ===== */}
       {showReferModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-slate-800 p-6 rounded-xl w-96 border border-slate-600">

@@ -30,9 +30,6 @@ const EmployeeSidebar = ({ open, onClose }) => {
             My Tasks
           </NavLink>
         </nav>
-
-
-
       </aside>
     </>
   );

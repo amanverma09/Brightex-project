@@ -17,7 +17,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/ceo", ceoRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/tasks", taskRoutes);
-
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
 connectDB();
 const PORT = process.env.PORT || 2000;
 app.listen(PORT, () => {
