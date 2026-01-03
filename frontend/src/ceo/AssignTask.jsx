@@ -29,13 +29,21 @@ const AssignTask = () => {
   /* ================= FETCH ================= */
 
   const fetchEmployees = async () => {
-    const res = await api.get("/employees");
-    setEmployees(res.data.employees || []);
+    try {
+      const res = await api.get("/employees");
+      setEmployees(res.data.employees || []);
+    } catch (err) {
+      console.error("Fetch employees failed", err);
+    }
   };
 
   const fetchTasks = async () => {
-    const res = await api.get("/tasks/ceo/all");
-    setTasks(res.data.tasks || []);
+    try {
+      const res = await api.get("/tasks/ceo/all");
+      setTasks(res.data.tasks || []);
+    } catch (err) {
+      console.error("Fetch tasks failed", err);
+    }
   };
 
   useEffect(() => {
@@ -68,7 +76,6 @@ const AssignTask = () => {
       setLoading(true);
 
       if (isEdit) {
-        // ✅ UPDATE TASK
         await api.patch(`/tasks/${editTaskId}`, {
           title,
           description,
@@ -77,7 +84,6 @@ const AssignTask = () => {
           priority,
         });
       } else {
-        // ✅ CREATE TASK
         await api.post("/tasks/assign", {
           title,
           description,
@@ -118,34 +124,32 @@ const AssignTask = () => {
 
     try {
       await api.delete(`/tasks/${id}`);
-      await fetchTasks(); // refresh list
+      await fetchTasks();
     } catch (err) {
       console.error("Delete failed", err);
       alert("Failed to delete task");
     }
   };
 
-  /* ================= FILTER ================= */
-
   const filteredTasks =
     statusFilter === "ALL"
       ? tasks
       : tasks.filter((t) => normalizeStatus(t.status) === statusFilter);
 
-  /* ================= UI ================= */
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 p-6 space-y-4">
+    <div className="min-h-screen bg-white text-[#8a8a8a] p-6 space-y-6">
       {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold text-sky-400">Tasks</h1>
+      <div className="flex justify-between items-center border-b border-[#8a8a8a]/20 pb-4">
+        <h1 className="text-xl font-bold text-[#00bba3] uppercase tracking-tight">
+          Tasks
+        </h1>
 
         <button
           onClick={() => {
             resetForm();
             setOpen(true);
           }}
-          className="text-xs px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-slate-900 rounded font-semibold"
+          className="text-xs px-4 py-2 bg-[#00bba3] hover:bg-[#00a38d] text-white rounded shadow-md font-bold uppercase transition-all"
         >
           + Assign Task
         </button>
@@ -157,10 +161,10 @@ const AssignTask = () => {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1 rounded font-medium ${
+            className={`px-4 py-1.5 rounded-full font-bold transition-colors ${
               statusFilter === s
-                ? "bg-sky-500 text-slate-900"
-                : "bg-slate-800 text-slate-400"
+                ? "bg-[#00bba3] text-white"
+                : "bg-[#8a8a8a]/10 text-[#8a8a8a] hover:bg-[#8a8a8a]/20"
             }`}
           >
             {s.replace("_", " ")}
@@ -169,55 +173,66 @@ const AssignTask = () => {
       </div>
 
       {/* TASK LIST */}
-      <div className="grid gap-3">
+      <div className="grid gap-4">
         {filteredTasks.length === 0 && (
-          <p className="text-xs text-slate-500">No tasks found</p>
+          <div className="text-center py-10 border-2 border-dashed border-[#8a8a8a]/20 rounded-xl">
+            <p className="text-sm text-[#8a8a8a]">
+              No tasks found in this category.
+            </p>
+          </div>
         )}
 
         {filteredTasks.map((t) => (
           <div
             key={t._id}
-            className="bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs"
+            className="bg-white border-l-4 border-[#00bba3] border  rounded-lg p-4 text-xs transition-hover "
           >
             <div className="flex justify-between items-start">
-              <div>
-                <p className="font-semibold text-sky-400">{t.title}</p>
-                <p className="text-slate-400 mt-0.5">{t.description || "—"}</p>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-[#333]">{t.title}</p>
+                <p className="text-[#8a8a8a] leading-relaxed">
+                  {t.description || "No description provided."}
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
-                {/* EDIT BUTTON */}
                 <button
                   onClick={() => handleEdit(t)}
-                  className="text-[10px] px-2 py-0.5 bg-green-700 hover:bg-green-600 rounded"
+                  className="px-3 py-1 bg-[#8a8a8a]/10 text-[#8a8a8a] hover:bg-[#8a8a8a] hover:text-white rounded font-bold uppercase text-[9px] transition-colors"
                 >
                   Edit
                 </button>
-
-                {/* DELETE BUTTON */}
                 <button
                   onClick={() => handleDelete(t._id)}
-                  className="text-[10px] px-2 py-0.5 bg-red-700 hover:bg-red-600 rounded"
+                  className="px-3 py-1 border border-[#00bba3] text-[#00bba3] hover:bg-[#00bba3] hover:text-white rounded font-bold uppercase text-[9px] transition-colors"
                 >
                   Delete
                 </button>
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-2 text-[10px]">
-              <span className="text-slate-500">
-                Due: {new Date(t.deadline).toLocaleDateString()}
-              </span>
-
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full bg-slate-800">
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-100 text-[10px]">
+              <div className="flex items-center gap-3">
+                <span className="text-[#8a8a8a] font-medium">
+                  📅 Due:{" "}
+                  <span className="font-bold">
+                    {new Date(t.deadline).toLocaleDateString()}
+                  </span>
+                </span>
+                <span className="flex items-center gap-1 bg-[#8a8a8a]/5 px-2 py-0.5 rounded text-[#8a8a8a] font-bold">
                   👤 {t.assignedTo?.name || "Unassigned"}
                 </span>
+              </div>
 
-                <span className="px-2 py-0.5 rounded-full bg-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-[#00bba3]/10 text-[#00bba3] font-black uppercase">
                   {normalizeStatus(t.status)}
                 </span>
-                <span className="text-[10px] px-2 py-0.5 bg-slate-800 rounded">
+                <span
+                  className={`px-2 py-0.5 rounded text-white font-black uppercase ${
+                    t.priority === "HIGH" ? "bg-[#00bba3]" : "bg-[#8a8a8a]"
+                  }`}
+                >
                   {t.priority}
                 </span>
               </div>
@@ -228,81 +243,91 @@ const AssignTask = () => {
 
       {/* MODAL */}
       {open && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-[#8a8a8a]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleSubmit}
-            className="bg-slate-900 border border-slate-800 rounded-lg w-full max-w-md p-5 space-y-3 text-xs"
+            className="bg-white border-2 border-[#00bba3] rounded-xl w-full max-w-md p-6 space-y-4 shadow-2xl"
           >
-            <h2 className="text-sm font-semibold text-sky-400">
-              {isEdit ? "Edit Task" : "Assign Task"}
+            <h2 className="text-lg font-black text-[#00bba3] uppercase tracking-tight border-b border-slate-100 pb-2">
+              {isEdit ? "Update Task Details" : "New Task Assignment"}
             </h2>
 
-            {error && <p className="text-red-400">{error}</p>}
+            {error && (
+              <p className="text-[10px] text-white bg-[#00bba3] p-2 rounded font-bold uppercase">
+                ⚠️ {error}
+              </p>
+            )}
 
-            <input
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded"
-              placeholder="Task title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
+            <div className="space-y-3">
+              <input
+                className="w-full px-3 py-2 bg-white border border-[#8a8a8a]/30 rounded focus:border-[#00bba3] outline-none text-[#333] font-medium placeholder-[#8a8a8a]/50"
+                placeholder="Task Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
 
-            <textarea
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded"
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+              <textarea
+                className="w-full px-3 py-2 bg-white border border-[#8a8a8a]/30 rounded focus:border-[#00bba3] outline-none text-[#333] h-24 font-medium placeholder-[#8a8a8a]/50"
+                placeholder="Task Description..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
 
-            <select
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded"
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-            >
-              <option value="">Assign to employee</option>
-              {employees.map((e) => (
-                <option key={e._id} value={e._id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex gap-2">
               <select
-                className="w-1/2 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-[#8a8a8a]/30 rounded focus:border-[#00bba3] outline-none text-[#333] font-bold"
+                value={assignedTo}
+                onChange={(e) => setAssignedTo(e.target.value)}
               >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
+                <option value="">Select Employee</option>
+                {employees.map((e) => (
+                  <option key={e._id} value={e._id}>
+                    {e.name}
+                  </option>
+                ))}
               </select>
 
-              <input
-                type="date"
-                className="w-1/2 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded"
-                min={new Date().toISOString().split("T")[0]}
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-              />
+              <div className="flex gap-3">
+                <select
+                  className="w-1/2 px-3 py-2 bg-white border border-[#8a8a8a]/30 rounded focus:border-[#00bba3] outline-none text-[#333] font-bold"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
+                  <option value="LOW">Priority: Low</option>
+                  <option value="MEDIUM">Priority: Medium</option>
+                  <option value="HIGH">Priority: High</option>
+                </select>
+
+                <input
+                  type="date"
+                  className="w-1/2 px-3 py-2 bg-white border border-[#8a8a8a]/30 rounded focus:border-[#00bba3] outline-none text-[#333] font-bold"
+                  min={new Date().toISOString().split("T")[0]}
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => {
                   setOpen(false);
                   resetForm();
                 }}
-                className="px-3 py-1 bg-slate-800 rounded"
+                className="px-5 py-2 text-[#8a8a8a] font-bold uppercase text-[10px] hover:bg-[#8a8a8a]/10 rounded transition-colors"
               >
                 Cancel
               </button>
 
               <button
                 disabled={loading}
-                className="px-3 py-1 bg-sky-500 text-slate-900 rounded font-semibold"
+                className="px-6 py-2 bg-[#00bba3] text-white rounded font-bold uppercase text-[10px] shadow-md hover:bg-[#00a38d] transition-all"
               >
-                {loading ? "Saving..." : isEdit ? "Update Task" : "Assign Task"}
+                {loading
+                  ? "Processing..."
+                  : isEdit
+                  ? "Save Changes"
+                  : "Assign Now"}
               </button>
             </div>
           </form>

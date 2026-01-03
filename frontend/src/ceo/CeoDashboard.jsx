@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
+import { useNavigate } from "react-router-dom";
 
-/* ================== STATUS BADGE COLORS ================== */
+/* ================== BRAND-ALIGNED STATUS COLORS ================== */
 const badgeColors = {
-  PENDING: "bg-yellow-500/20 text-yellow-400",
-  IN_PROGRESS: "bg-blue-500/20 text-blue-400",
-  COMPLETED: "bg-emerald-500/20 text-emerald-400",
+  PENDING: "bg-[#8a8a8a]/10 text-[#8a8a8a]",
+  IN_PROGRESS: "bg-[#00bba3]/10 text-[#00bba3]",
+  COMPLETED: "bg-[#00bba3] text-white",
 };
 
 /* ================== OVERVIEW CARD ================== */
-const Card = ({ title, value, onClick }) => (
+const Card = ({ title, value, onClick, isActive }) => (
   <div
     onClick={onClick}
-    className="bg-slate-800 border border-slate-700 rounded-xl p-5 cursor-pointer hover:border-sky-500 transition"
+    className={`p-5 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
+      isActive 
+        ? "border-[#00bba3] bg-[#00bba3]/5 shadow-lg shadow-[#00bba3]/10" 
+        : "border-slate-100 bg-white hover:border-[#00bba3]/30"
+    }`}
   >
-    <p className="text-sm text-slate-400">{title}</p>
-    <p className="text-2xl font-semibold text-slate-100 mt-1">{value}</p>
+    <p className={`text-[10px] font-black uppercase tracking-widest ${isActive ? "text-[#00bba3]" : "text-[#8a8a8a]"}`}>
+      {title}
+    </p>
+    <p className={`text-3xl font-black mt-1 ${isActive ? "text-[#00bba3]" : "text-[#333]"}`}>
+      {value}
+    </p>
   </div>
 );
 
@@ -25,328 +34,172 @@ const CeoDashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  /* ================== FETCH OVERVIEW ================== */
-  const fetchOverview = async () => {
-    const res = await api.get("/tasks/ceo/dashboard");
-    setOverview(res.data.dashboard);
+  /* ================== FETCH DATA ================== */
+  const fetchDashboardData = async (filter = "ALL") => {
+    try {
+      setLoading(true);
+      setActiveFilter(filter);
+
+      // Fetch Overview Stats
+      const overviewRes = await api.get("/tasks/ceo/dashboard");
+      setOverview(overviewRes.data.dashboard);
+
+      // Determine URL based on brand filter logic
+      let url = "/tasks/ceo/all";
+      if (filter === "IN_PROGRESS") url = "/tasks/ceo/status/IN_PROGRESS";
+      if (filter === "COMPLETED") url = "/tasks/ceo/status/COMPLETED";
+      if (filter === "OVERDUE") url = "/tasks/ceo/overdue";
+
+      const tasksRes = await api.get(url);
+      setTasks(tasksRes.data.tasks || []);
+    } catch (err) {
+      console.error("Dashboard error", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* ================== FETCH TASKS BASED ON FILTER ================== */
-  const fetchTasks = async (filter = "ALL") => {
-    setLoading(true);
-    setActiveFilter(filter);
-
-    let url = "/tasks/ceo/all";
-
-    // if (filter === "PENDING") url = "/tasks/ceo/pending";
-    if (filter === "IN_PROGRESS") url = "/tasks/ceo/status/IN_PROGRESS";
-    if (filter === "COMPLETED") url = "/tasks/ceo/status/COMPLETED";
-    if (filter === "OVERDUE") url = "/tasks/ceo/overdue";
-
-    const res = await api.get(url);
-    setTasks(res.data.tasks || []);
-    setLoading(false);
+  const logout = () => {
+    localStorage.clear();
+    navigate("/");
   };
 
-  /* ================== ON LOAD ================== */
   useEffect(() => {
-    fetchOverview();
-    fetchTasks("ALL");
+    fetchDashboardData("ALL");
   }, []);
 
-  /* ================== UI ================== */
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto text-slate-200">
-      {/* OVERVIEW */}
-      <h2 className="text-lg font-medium mb-4">Overview</h2>
-
-      {loading && <p className="text-slate-400">Loading dashboard...</p>}
-
-      {overview && (
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          <Card
-            title="Total Tasks"
-            value={overview.totalTasks}
-            onClick={() => fetchTasks("ALL")}
-          />
-          {/* <Card
-            title="Pending"
-            value={overview.pendingTasks}
-            onClick={() => fetchTasks("PENDING")}
-          /> */}
-          <Card
-            title="In Progress"
-            value={overview.inProgressTasks}
-            onClick={() => fetchTasks("IN_PROGRESS")}
-          />
-          <Card
-            title="Completed"
-            value={overview.completedTasks}
-            onClick={() => fetchTasks("COMPLETED")}
-          />
-          <Card
-            title="Overdue/pending"
-            value={overview.overdueTasks}
-            onClick={() => fetchTasks("OVERDUE")}
-          />
+    <div className="min-h-screen bg-white text-[#8a8a8a] p-4 md:p-8">
+      {/* HEADER */}
+      <div className="max-w-7xl mx-auto flex justify-between items-center mb-10">
+        <div>
+          <h1 className="text-2xl font-black text-[#00bba3] uppercase tracking-tighter">
+            Executive Overview
+          </h1>
+          <p className="text-[10px] font-bold text-[#8a8a8a] uppercase tracking-widest opacity-70">
+            Real-time Operational Insights
+          </p>
         </div>
-      )}
-
-      {/* TASKS */}
-      <h2 className="text-lg font-medium mt-8 mb-4">
-        {activeFilter === "ALL"
-          ? "All Tasks"
-          : `${activeFilter.replace("_", " ")} Tasks`}
-      </h2>
-
-      {!loading && tasks.length === 0 && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-slate-400">
-          No tasks found
-        </div>
-      )}
-
-      {/* DESKTOP TABLE */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-          <thead className="bg-slate-900 text-slate-400 text-sm">
-            <tr>
-              <th className="px-4 py-3 text-left">Task</th>
-              <th className="px-4 py-3 text-left">Employee</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Deadline</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((t) => (
-              <tr key={t._id} className="border-t border-slate-700">
-                <td className="px-4 py-3">{t.title}</td>
-                <td className="px-4 py-3 text-slate-400">
-                  {t.assignedTo?.name || "Unassigned"}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`px-3 py-1 text-xs rounded-full ${
-                      badgeColors[t.status] || "bg-slate-500/20 text-slate-300"
-                    }`}
-                  >
-                    {t.status.replace("_", " ")}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-400">
-                  {t.deadline
-                    ? new Date(t.deadline).toLocaleDateString()
-                    : "No deadline"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <button 
+          onClick={logout}
+          className="text-[10px] font-black uppercase tracking-widest px-6 py-2 border-2 border-[#8a8a8a]/20 hover:border-red-400 hover:text-red-500 rounded-full transition-all"
+        >
+          Logout
+        </button>
       </div>
 
-      {/* MOBILE CARDS */}
-      <div className="grid gap-4 md:hidden">
-        {tasks.map((t) => (
-          <div
-            key={t._id}
-            className="bg-slate-800 border border-slate-700 rounded-xl p-4"
-          >
-            <h3 className="font-semibold">{t.title}</h3>
-            <p className="text-sm text-slate-400">
-              {t.assignedTo?.name || "Unassigned"}
-            </p>
+      <div className="max-w-7xl mx-auto">
+        {/* STATS CARDS */}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 mb-12">
+          {overview && (
+            <>
+              <Card
+                title="Total Tasks"
+                value={overview.totalTasks}
+                isActive={activeFilter === "ALL"}
+                onClick={() => fetchDashboardData("ALL")}
+              />
+              <Card
+                title="In Progress"
+                value={overview.inProgressTasks}
+                isActive={activeFilter === "IN_PROGRESS"}
+                onClick={() => fetchDashboardData("IN_PROGRESS")}
+              />
+              <Card
+                title="Completed"
+                value={overview.completedTasks}
+                isActive={activeFilter === "COMPLETED"}
+                onClick={() => fetchDashboardData("COMPLETED")}
+              />
+              <Card
+                title="Overdue"
+                value={overview.overdueTasks}
+                isActive={activeFilter === "OVERDUE"}
+                onClick={() => fetchDashboardData("OVERDUE")}
+              />
+            </>
+          )}
+        </div>
 
-            <div className="flex items-center justify-between mt-3">
-              <span
-                className={`px-3 py-1 text-xs rounded-full ${
-                  badgeColors[t.status] || "bg-slate-500/20 text-slate-300"
-                }`}
-              >
-                {t.status.replace("_", " ")}
-              </span>
+        {/* TASK SECTION HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-sm font-black uppercase tracking-widest text-[#333]">
+            {activeFilter.replace("_", " ")} Tasks List
+          </h2>
+          <div className="h-[2px] flex-grow mx-4 bg-[#8a8a8a]/10"></div>
+        </div>
 
-              <span className="text-xs text-slate-400">
-                {t.deadline
-                  ? new Date(t.deadline).toLocaleDateString()
-                  : "No deadline"}
-              </span>
-            </div>
+        {loading ? (
+          <div className="py-20 text-center animate-pulse font-bold uppercase text-[10px] tracking-widest">
+            Syncing database...
           </div>
-        ))}
+        ) : tasks.length === 0 ? (
+          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center">
+            <p className="text-sm font-bold opacity-50 uppercase">No records found for this category</p>
+          </div>
+        ) : (
+          <>
+            {/* DESKTOP TABLE */}
+            <div className="hidden md:block bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-[#8a8a8a]/5 text-[#8a8a8a] text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+                    <th className="px-6 py-4">Task Details</th>
+                    <th className="px-6 py-4">Assigned To</th>
+                    <th className="px-6 py-4">Current Status</th>
+                    <th className="px-6 py-4 text-right">Deadline</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {tasks.map((t) => (
+                    <tr key={t._id} className="hover:bg-[#00bba3]/5 transition-colors group">
+                      <td className="px-6 py-5">
+                        <p className="text-sm font-bold text-[#333] group-hover:text-[#00bba3] transition-colors">{t.title}</p>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-[#8a8a8a]/20 flex items-center justify-center text-[8px] font-bold">👤</div>
+                          <span className="text-xs font-medium">{t.assignedTo?.name || "System Unassigned"}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className={`px-3 py-1 text-[9px] font-black uppercase rounded-md tracking-tighter ${badgeColors[t.status] || "bg-slate-100"}`}>
+                          {t.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 text-right font-bold text-xs">
+                        {t.deadline ? new Date(t.deadline).toLocaleDateString() : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* MOBILE CARDS */}
+            <div className="grid gap-4 md:hidden">
+              {tasks.map((t) => (
+                <div key={t._id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-bold text-[#333] text-sm leading-tight">{t.title}</h3>
+                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase rounded ${badgeColors[t.status]}`}>
+                      {t.status.replace("_", " ")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-50 text-[10px] font-bold uppercase tracking-widest">
+                    <span className="text-[#8a8a8a]">{t.assignedTo?.name || "Unassigned"}</span>
+                    <span className="text-[#333]">{t.deadline ? new Date(t.deadline).toLocaleDateString() : "No Date"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 };
 
 export default CeoDashboard;
-
-// new update by aman
-
-// import { useEffect, useState } from "react";
-// import api from "../api/api";
-// import { useNavigate } from "react-router-dom";
-
-// /* ================== STATUS BADGE COLORS ================== */
-// const badgeColors = {
-//   PENDING: "bg-yellow-500/20 text-yellow-400",
-//   IN_PROGRESS: "bg-blue-500/20 text-blue-400",
-//   COMPLETED: "bg-emerald-500/20 text-emerald-400",
-// };
-
-// /* ================== OVERVIEW CARD ================== */
-// const Card = ({ title, value }) => (
-//   <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
-//     <p className="text-sm text-slate-400">{title}</p>
-//     <p className="text-2xl font-semibold text-slate-100 mt-1">{value}</p>
-//   </div>
-// );
-
-// /* ================== MAIN COMPONENT ================== */
-// const CeoDashboard = () => {
-//   const [overview, setOverview] = useState(null);
-//   const [tasks, setTasks] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   const navigate = useNavigate();
-
-//   /* ================== FETCH ALL DATA (EASY WAY) ================== */
-//   const fetchDashboardData = async () => {
-//     try {
-//       setLoading(true);
-
-//       const overviewRes = await api.get("/tasks/ceo/dashboard");
-//       const tasksRes = await api.get("/tasks/ceo/all");
-
-//       setOverview(overviewRes.data.dashboard);
-//       setTasks(tasksRes.data.tasks || []);
-
-//       console.log("ALL TASKS:", tasksRes.data.tasks);
-//     } catch (err) {
-//       console.error("Dashboard fetch failed", err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   /* ================== LOGOUT ================== */
-//   const logout = () => {
-//     localStorage.removeItem("token");
-//     localStorage.removeItem("role");
-//     navigate("/");
-//   };
-
-//   /* ================== ON LOAD ================== */
-//   useEffect(() => {
-//     fetchDashboardData();
-//   }, []);
-
-//   /* ================== UI ================== */
-//   return (
-//     <div className="min-h-screen bg-slate-900 text-slate-200">
-//       {/* HEADER */}
-//       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
-//         <h1 className="text-xl font-semibold text-sky-400">CEO Dashboard</h1>
-//         <button
-//           onClick={logout}
-//           className="text-sm px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600"
-//         >
-//           Logout
-//         </button>
-//       </div>
-
-//       <div className="p-6 max-w-7xl mx-auto">
-//         {/* OVERVIEW */}
-//         <h2 className="text-lg font-medium mb-4">Overview</h2>
-
-//         {loading && <p className="text-slate-400">Loading dashboard...</p>}
-
-//         {overview && !loading && (
-//           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-//             <Card title="Total Tasks" value={overview.totalTasks} />
-//             <Card title="Pending" value={overview.pendingTasks} />
-//             <Card title="In Progress" value={overview.inProgressTasks} />
-//             <Card title="Completed" value={overview.completedTasks} />
-//             <Card title="Overdue" value={overview.overdueTasks} />
-//           </div>
-//         )}
-
-//         {/* TASKS */}
-//         <h2 className="text-lg font-medium mt-8 mb-4">All Tasks</h2>
-
-//         {!loading && tasks.length === 0 && (
-//           <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-slate-400">
-//             No tasks created yet
-//           </div>
-//         )}
-
-//         {/* DESKTOP TABLE */}
-//         <div className="hidden md:block overflow-x-auto">
-//           <table className="w-full bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-//             <thead className="bg-slate-900 text-slate-400 text-sm">
-//               <tr>
-//                 <th className="px-4 py-3 text-left">Task</th>
-//                 <th className="px-4 py-3 text-left">Employee</th>
-//                 <th className="px-4 py-3 text-left">Status</th>
-//                 <th className="px-4 py-3 text-left">Deadline</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {tasks.map((t) => (
-//                 <tr key={t._id} className="border-t border-slate-700">
-//                   <td className="px-4 py-3">{t.title}</td>
-//                   <td className="px-4 py-3 text-slate-400">
-//                     {t.assignedTo?.name || "Unassigned"}
-//                   </td>
-//                   <td className="px-4 py-3">
-//                     <span
-//                       className={`px-3 py-1 text-xs rounded-full ${badgeColors[t.status] ||
-//                         "bg-slate-500/20 text-slate-300"
-//                         }`}
-//                     >
-//                       {t.status.replace("_", " ")}
-//                     </span>
-//                   </td>
-//                   <td className="px-4 py-3 text-slate-400">
-//                     {t.deadline
-//                       ? new Date(t.deadline).toLocaleDateString()
-//                       : "No deadline"}
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//         </div>
-
-//         {/* MOBILE CARDS */}
-//         <div className="grid gap-4 md:hidden">
-//           {tasks.map((t) => (
-//             <div
-//               key={t._id}
-//               className="bg-slate-800 border border-slate-700 rounded-xl p-4"
-//             >
-//               <h3 className="font-semibold">{t.title}</h3>
-//               <p className="text-sm text-slate-400">
-//                 {t.assignedTo?.name || "Unassigned"}
-//               </p>
-//               <div className="flex items-center justify-between mt-3">
-//                 <span
-//                   className={`px-3 py-1 text-xs rounded-full ${badgeColors[t.status] || "bg-slate-500/20 text-slate-300"
-//                     }`}
-//                 >
-//                   {t.status.replace("_", " ")}
-//                 </span>
-//                 <span className="text-xs text-slate-400">
-//                   {t.deadline
-//                     ? new Date(t.deadline).toLocaleDateString()
-//                     : "No deadline"}
-//                 </span>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default CeoDashboard;

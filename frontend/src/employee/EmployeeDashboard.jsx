@@ -2,21 +2,37 @@ import { useEffect, useState } from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 
-/* ================= STATUS COLORS ================= */
+/* ================= BRAND-ALIGNED STATUS COLORS ================= */
 const statusColors = {
-  PENDING: "bg-yellow-500/20 text-yellow-400",
-  IN_PROGRESS: "bg-blue-500/20 text-blue-400",
-  COMPLETED: "bg-emerald-500/20 text-emerald-400",
+  PENDING: "bg-[#8a8a8a]/10 text-[#8a8a8a] border border-[#8a8a8a]/20",
+  IN_PROGRESS: "bg-[#00bba3]/10 text-[#00bba3] border border-[#00bba3]/20",
+  COMPLETED: "bg-[#00bba3] text-white",
 };
 
 /* ================= STAT CARD ================= */
-const StatCard = ({ title, value, color, onClick }) => (
+const StatCard = ({ title, value, isActive, onClick }) => (
   <div
     onClick={onClick}
-    className="bg-slate-800 border border-slate-700 rounded-xl p-5 cursor-pointer hover:border-sky-500 transition"
+    className={`p-5 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
+      isActive
+        ? "border-[#00bba3] bg-[#00bba3]/5 shadow-lg shadow-[#00bba3]/10"
+        : "border-slate-100 bg-white hover:border-[#00bba3]/30 shadow-sm"
+    }`}
   >
-    <p className="text-sm text-slate-400">{title}</p>
-    <p className={`text-2xl font-semibold mt-1 ${color}`}>{value}</p>
+    <p
+      className={`text-[10px] font-black uppercase tracking-widest ${
+        isActive ? "text-[#00bba3]" : "text-[#8a8a8a]"
+      }`}
+    >
+      {title}
+    </p>
+    <p
+      className={`text-3xl font-black mt-1 ${
+        isActive ? "text-[#00bba3]" : "text-[#333]"
+      }`}
+    >
+      {value}
+    </p>
   </div>
 );
 
@@ -37,7 +53,7 @@ const EmployeeDashboard = () => {
 
   const navigate = useNavigate();
 
-  /* ================= FETCH TASKS ================= */
+  /* ================= FETCH DATA ================= */
   const fetchTasks = async () => {
     try {
       setLoading(true);
@@ -62,18 +78,11 @@ const EmployeeDashboard = () => {
     }
   };
 
-  /* ================= FILTER LOGIC ================= */
   const applyFilter = (type) => {
     setActiveFilter(type);
-
-    if (type === "ALL") {
-      setFilteredTasks(tasks);
-    }
-
-    if (type === "COMPLETED") {
+    if (type === "ALL") setFilteredTasks(tasks);
+    if (type === "COMPLETED")
       setFilteredTasks(tasks.filter((t) => t.status === "COMPLETED"));
-    }
-
     if (type === "OVERDUE") {
       setFilteredTasks(
         tasks.filter(
@@ -83,7 +92,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  /* ================= FETCH EMPLOYEES ================= */
   const fetchEmployees = async () => {
     try {
       const res = await api.get("/employees/basic-list");
@@ -93,7 +101,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  /* ================= UPDATE STATUS ================= */
   const updateStatus = async (taskId, status) => {
     try {
       await api.patch(`/tasks/${taskId}/status`, { status });
@@ -103,7 +110,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  /* ================= REFER TASK ================= */
   const openReferModal = (task) => {
     setSelectedTask(task);
     setReferEmployee("");
@@ -115,10 +121,9 @@ const EmployeeDashboard = () => {
 
   const referTask = async () => {
     if (!referEmployee || !newDeadline) {
-      setReferMessage("⚠ Please select employee & deadline");
+      setReferMessage("⚠ Select employee & deadline");
       return;
     }
-
     try {
       await api.patch(`/tasks/${selectedTask._id}/refer`, {
         newEmployeeId: referEmployee,
@@ -130,175 +135,257 @@ const EmployeeDashboard = () => {
         fetchTasks();
       }, 800);
     } catch (err) {
-      setReferMessage("❌ Failed to refer task");
-      console.error(err);
+      setReferMessage("❌ Failed to refer");
     }
-  };
-
-  const logout = () => {
-    localStorage.clear();
-    navigate("/");
   };
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200">
-      <div className="p-6 max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen bg-white text-[#8a8a8a] p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* HEADER SECTION */}
+        <div className="relative mb-10 overflow-hidden rounded-[2rem] bg-white p-8 shadow-sm border border-slate-100">
+          {/* Decorative Background Element */}
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#00bba3]/5 blur-3xl" />
+
+          <div className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              {/* Breadcrumb style label */}
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#00bba3]">
+                  Portal
+                </span>
+                <span className="h-1 w-1 rounded-full bg-[#8a8a8a]/30" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8a8a8a]/60">
+                  Executive Dashboard
+                </span>
+              </div>
+
+              <h1 className="text-4xl font-black tracking-tighter text-[#333] uppercase">
+                My <span className="text-[#00bba3]">Workspace</span>
+              </h1>
+
+              <p className="mt-1 flex items-center gap-2 text-xs font-medium text-[#8a8a8a]">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00bba3] opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00bba3]"></span>
+                </span>
+                Operational Performance & Task Analytics
+              </p>
+            </div>
+
+            {/* Header Actions */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => fetchTasks()}
+                className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 transition-all hover:border-[#00bba3]/30 hover:bg-white hover:shadow-md"
+                title="Sync Workspace"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-[#8a8a8a] transition-transform group-hover:rotate-180 group-hover:text-[#00bba3]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+
+              <div className="h-12 w-px bg-slate-100" />
+
+              <div className="hidden flex-col items-end sm:flex">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8a8a8a]">
+                  System Status
+                </span>
+                <span className="text-xs font-bold text-[#333]">
+                  Verified Online
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ===== STATS ===== */}
         {stats && (
           <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
             <StatCard
-              title="Total Tasks"
+              title="Assigned"
               value={stats.total}
-              color="text-slate-100"
+              isActive={activeFilter === "ALL"}
               onClick={() => applyFilter("ALL")}
             />
             <StatCard
-              title="Completed"
+              title="Finished"
               value={stats.completed}
-              color="text-emerald-400"
+              isActive={activeFilter === "COMPLETED"}
               onClick={() => applyFilter("COMPLETED")}
             />
             <StatCard
               title="Overdue"
               value={stats.overdue}
-              color="text-red-400"
+              isActive={activeFilter === "OVERDUE"}
               onClick={() => applyFilter("OVERDUE")}
             />
             <StatCard
               title="Accuracy"
               value={`${stats.accuracy}%`}
-              color="text-sky-400"
+              isActive={false}
             />
           </div>
         )}
 
-        {/* ===== TASKS ===== */}
-        <h2 className="text-lg font-medium">
-          {activeFilter === "ALL" ? "All Tasks" : `${activeFilter} Tasks`}
-        </h2>
+        {/* ===== TASK LIST ===== */}
+        <div className="flex items-center gap-4 mb-6">
+          <h2 className="text-sm font-black uppercase tracking-widest text-[#333]">
+            {activeFilter} Records
+          </h2>
+          <div className="h-px flex-grow bg-[#8a8a8a]/10"></div>
+        </div>
 
-        {loading && <p className="text-slate-400">Loading tasks...</p>}
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredTasks.map((task) => (
-            <div
-              key={task._id}
-              className="bg-slate-800 border border-slate-700 rounded-xl p-5 flex flex-col justify-between"
-            >
-              <div>
-                <h3 className="font-semibold text-slate-100 mb-1">
-                  {task.title}
-                </h3>
-
-                <p className="text-sm text-slate-400 mb-3">
-                  {task.description}
-                </p>
-
-                <span
-                  className={`inline-block px-3 py-1 text-xs rounded-full ${
-                    statusColors[task.status]
-                  }`}
-                >
-                  {task.status.replace("_", " ")}
-                </span>
-
-                {task.assignedBy?.name && (
-                  <p className="text-xs text-blue-300 mt-1">
-                    Assigned by: {task.assignedBy.name}
-                  </p>
-                )}
-
-                {task.referredBy?.name && (
-                  <p className="text-xs text-orange-300 mt-1">
-                    Referred by: {task.referredBy.name}
-                  </p>
-                )}
-
-                <div className="mt-4 flex gap-2">
-                  {["IN_PROGRESS", "COMPLETED"].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => updateStatus(task._id, s)}
-                      className="text-xs px-3 py-1 rounded-lg cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-600"
+        {loading ? (
+          <div className="py-20 text-center animate-pulse font-bold uppercase text-[10px] tracking-widest">
+            Syncing Records...
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredTasks.map((task) => (
+              <div
+                key={task._id}
+                className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <span
+                      className={`px-2.5 py-1 text-[9px] rounded-md font-black uppercase tracking-tighter ${
+                        statusColors[task.status]
+                      }`}
                     >
-                      {s.replace("_", " ")}
+                      {task.status.replace("_", " ")}
+                    </span>
+                    <p className="text-[10px] font-bold text-[#8a8a8a]">
+                      ID: {task._id.slice(-5).toUpperCase()}
+                    </p>
+                  </div>
+
+                  <h3 className="font-bold text-[#333] text-lg mb-1 leading-tight">
+                    {task.title}
+                  </h3>
+                  <p className="text-xs text-[#8a8a8a] mb-6 line-clamp-2 leading-relaxed">
+                    {task.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {["IN_PROGRESS", "COMPLETED"].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => updateStatus(task._id, s)}
+                        className="text-[9px] px-3 py-1.5 rounded-lg font-black uppercase tracking-widest border border-[#8a8a8a]/20 hover:border-[#00bba3] hover:text-[#00bba3] transition-colors"
+                      >
+                        Set {s.replace("_", " ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-50 flex flex-col gap-3">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold uppercase text-[#8a8a8a]/60">
+                      Deadline
+                    </span>
+                    <span className="font-black text-[#333]">
+                      {new Date(task.deadline).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {task.status !== "COMPLETED" && (
+                    <button
+                      onClick={() => openReferModal(task)}
+                      className="w-full py-2.5 rounded-xl bg-[#00bba3]/10 text-[#00bba3] cursor-pointer font-black uppercase text-[10px] tracking-widest transition-all"
+                    >
+                      Refer Task ➝
                     </button>
-                  ))}
+                  )}
                 </div>
               </div>
-
-              <div className="mt-4 text-xs text-slate-400">
-                Deadline:{" "}
-                <span className="text-slate-300">
-                  {new Date(task.deadline).toLocaleDateString()}
-                </span>
-              </div>
-
-              {task.status !== "COMPLETED" && (
-                <button
-                  onClick={() => openReferModal(task)}
-                  className="text-xs mt-3 px-3 py-2 rounded-lg cursor-pointer bg-orange-500/20 text-orange-400 hover:bg-orange-500/30"
-                >
-                  Refer Task ➝
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ===== REFER MODAL ===== */}
       {showReferModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 p-6 rounded-xl w-96 border border-slate-600">
-            <h2 className="text-lg font-medium mb-2">
-              Refer: {selectedTask?.title}
-            </h2>
+        <div className="fixed inset-0 bg-[#8a8a8a]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white border-2 border-[#00bba3] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-[#00bba3] p-6 text-white">
+              <h2 className="text-lg font-black uppercase tracking-tighter">
+                Refer: {selectedTask?.title}
+              </h2>
+              <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">
+                Transfer responsibility to team member
+              </p>
+            </div>
 
-            <label className="block text-sm mb-1">Refer To (Employee)</label>
-            <select
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg mb-3"
-              value={referEmployee}
-              onChange={(e) => setReferEmployee(e.target.value)}
-            >
-              <option value="">Select employee</option>
-              {employees.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.name} ({emp.email})
-                </option>
-              ))}
-            </select>
+            <div className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-[#8a8a8a] tracking-widest ml-1">
+                  New Assignee
+                </label>
+                <select
+                  className="w-full px-4 py-3 bg-white border border-[#8a8a8a]/20 rounded-xl focus:border-[#00bba3] outline-none text-xs font-bold"
+                  value={referEmployee}
+                  onChange={(e) => setReferEmployee(e.target.value)}
+                >
+                  <option value="">Select Employee</option>
+                  {employees.map((emp) => (
+                    <option key={emp._id} value={emp._id}>
+                      {emp.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <label className="block text-sm mb-1">New Deadline</label>
-            <input
-              type="date"
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg mb-3"
-              value={newDeadline}
-              onChange={(e) => setNewDeadline(e.target.value)}
-            />
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-[#8a8a8a] tracking-widest ml-1">
+                  Proposed Deadline
+                </label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-3 bg-white border border-[#8a8a8a]/20 rounded-xl focus:border-[#00bba3] outline-none text-xs font-bold"
+                  value={newDeadline}
+                  onChange={(e) => setNewDeadline(e.target.value)}
+                />
+              </div>
 
-            {referMessage && (
-              <p className="text-sm text-emerald-400 mb-2">{referMessage}</p>
-            )}
+              {referMessage && (
+                <p className="text-[10px] font-black text-center text-[#00bba3] uppercase bg-[#00bba3]/5 p-2 rounded-lg border border-[#00bba3]/10">
+                  {referMessage}
+                </p>
+              )}
 
-            <button
-              onClick={referTask}
-              className="w-full py-2 rounded-lg bg-orange-500 text-black font-semibold mb-2"
-            >
-              Submit Refer
-            </button>
-
-            <button
-              onClick={() => setShowReferModal(false)}
-              className="w-full py-2 rounded-lg bg-slate-700"
-            >
-              Cancel
-            </button>
+              <div className="flex gap-3 pt-4 border-t border-slate-50">
+                <button
+                  onClick={() => setShowReferModal(false)}
+                  className="w-1/2 py-3 text-[#8a8a8a] font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={referTask}
+                  className="w-1/2 py-3 bg-[#00bba3] text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg shadow-[#00bba3]/20 hover:bg-[#00a38d] transition-all"
+                >
+                  Submit Transfer
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
