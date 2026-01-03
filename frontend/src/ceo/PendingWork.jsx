@@ -18,7 +18,7 @@ const PendingWork = () => {
 
   const fetchPending = async () => {
     try {
-      const res = await api.get("/tasks/ceo/pending");
+      const res = await api.get("/tasks/ceo/overdue");
       setTasks(res.data.tasks || []);
     } catch (e) {
       console.error(e);
@@ -89,7 +89,9 @@ const PendingWork = () => {
                 </td>
                 <td className="px-4 py-3">
                   <span
-                    className={`px-3 py-1 text-xs rounded-full ${badgeColors[t.status]}`}
+                    className={`px-3 py-1 text-xs rounded-full ${
+                      badgeColors[t.status]
+                    }`}
                   >
                     {t.status.replace("_", " ")}
                   </span>
@@ -105,10 +107,11 @@ const PendingWork = () => {
                       setOpen(true);
                       setError("");
                     }}
-                    className={`text-xs px-3 py-1 rounded-lg ${t.isLocked
+                    className={`text-xs px-3 py-1 rounded-lg ${
+                      t.isLocked
                         ? "bg-slate-700 cursor-not-allowed"
                         : "bg-sky-500 hover:bg-sky-600 text-slate-900"
-                      }`}
+                    }`}
                   >
                     {t.isLocked ? "Locked" : "Reassign"}
                   </button>
@@ -131,13 +134,13 @@ const PendingWork = () => {
             className="bg-slate-800 border border-slate-700 rounded-xl p-4"
           >
             <h3 className="font-semibold">{t.title}</h3>
-            <p className="text-sm text-slate-400">
-              {t.assignedTo?.name}
-            </p>
+            <p className="text-sm text-slate-400">{t.assignedTo?.name}</p>
 
             <div className="flex items-center justify-between mt-3">
               <span
-                className={`px-3 py-1 text-xs rounded-full ${badgeColors[t.status]}`}
+                className={`px-3 py-1 text-xs rounded-full ${
+                  badgeColors[t.status]
+                }`}
               >
                 {t.status.replace("_", " ")}
               </span>
@@ -155,10 +158,11 @@ const PendingWork = () => {
                   setOpen(true);
                   setError("");
                 }}
-                className={`text-xs px-3 py-1 rounded-lg ${t.isLocked
+                className={`text-xs px-3 py-1 rounded-lg ${
+                  t.isLocked
                     ? "bg-slate-700 cursor-not-allowed"
                     : "bg-sky-500 hover:bg-sky-600 text-slate-900"
-                  }`}
+                }`}
               >
                 {t.isLocked ? "Locked" : "Reassign"}
               </button>
@@ -179,13 +183,9 @@ const PendingWork = () => {
               Reassign Task
             </h2>
 
-            <p className="text-xs text-slate-400 mb-3">
-              {selectedTask.title}
-            </p>
+            <p className="text-xs text-slate-400 mb-3">{selectedTask.title}</p>
 
-            {error && (
-              <p className="text-xs text-red-400 mb-2">{error}</p>
-            )}
+            {error && <p className="text-xs text-red-400 mb-2">{error}</p>}
 
             <input
               type="date"

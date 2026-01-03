@@ -84,6 +84,7 @@ export const getMyTasks = async (req, res) => {
   }
 };
 
+// CEO updating task status
 export const updateTaskStatus = async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -134,6 +135,28 @@ export const updateTaskStatus = async (req, res) => {
   }
 };
 
+// delete task
+export const deleteTask = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const task = await Task.findByIdAndDelete(taskId);
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+    res.status(200).json({
+      message: "Task deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+// CEO fetching dashboard data
 export const ceoTaskDashboard = async (req, res) => {
   try {
     const totalTasks = await Task.countDocuments();

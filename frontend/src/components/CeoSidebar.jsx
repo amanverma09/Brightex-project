@@ -18,7 +18,12 @@ const CeoSidebar = ({ open, onClose }) => {
         transform transition-transform duration-300
         ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
-        <h2 className="text-xl font-semibold text-sky-400 mb-6">
+        <h2 className="text-xl font-semibold text-sky-400 mb-6 flex items-center gap-3">
+          <img
+            src="/Brightex-logo.png"
+            alt="Brightex Logo"
+            className="h-10 w-10 object-contain"
+          />
           Brightex CEO
         </h2>
 

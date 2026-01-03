@@ -2,6 +2,7 @@ import express from "express";
 import {
   assignTask,
   ceoTaskDashboard,
+  deleteTask,
   getAllTasksForCEO,
   getMyTasks,
   getOverdueTasksForCEO,
@@ -21,9 +22,13 @@ router.post("/assign", verifyToken, isCEO, assignTask);
 // Employee views own tasks
 router.get("/my", verifyToken, isEmployee, getMyTasks);
 
+// delete task
+router.delete("/:taskId", verifyToken, isCEO, deleteTask);
+
 // Employee updates task status
 router.patch("/:taskId/status", verifyToken, isEmployee, updateTaskStatus);
 
+// CEO reassigns task
 router.patch("/:taskId/reassign", verifyToken, isCEO, reassignTask);
 
 // CEO task dashboard

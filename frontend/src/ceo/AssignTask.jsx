@@ -112,14 +112,25 @@ const AssignTask = () => {
     setOpen(true);
   };
 
+  /* ================= DELETE HANDLER ================= */
+  const handleDelete = async (id) => {
+    if (!confirm("Delete task?")) return;
+
+    try {
+      await api.delete(`/tasks/${id}`);
+      await fetchTasks(); // refresh list
+    } catch (err) {
+      console.error("Delete failed", err);
+      alert("Failed to delete task");
+    }
+  };
+
   /* ================= FILTER ================= */
 
   const filteredTasks =
     statusFilter === "ALL"
       ? tasks
-      : tasks.filter(
-        (t) => normalizeStatus(t.status) === statusFilter
-      );
+      : tasks.filter((t) => normalizeStatus(t.status) === statusFilter);
 
   /* ================= UI ================= */
 
@@ -146,10 +157,11 @@ const AssignTask = () => {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1 rounded font-medium ${statusFilter === s
+            className={`px-3 py-1 rounded font-medium ${
+              statusFilter === s
                 ? "bg-sky-500 text-slate-900"
                 : "bg-slate-800 text-slate-400"
-              }`}
+            }`}
           >
             {s.replace("_", " ")}
           </button>
@@ -170,22 +182,24 @@ const AssignTask = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className="font-semibold text-sky-400">{t.title}</p>
-                <p className="text-slate-400 mt-0.5">
-                  {t.description || "—"}
-                </p>
+                <p className="text-slate-400 mt-0.5">{t.description || "—"}</p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[10px] px-2 py-0.5 bg-slate-800 rounded">
-                  {t.priority}
-                </span>
-
                 {/* EDIT BUTTON */}
                 <button
                   onClick={() => handleEdit(t)}
-                  className="text-[10px] px-2 py-0.5 bg-slate-700 hover:bg-slate-600 rounded"
+                  className="text-[10px] px-2 py-0.5 bg-green-700 hover:bg-green-600 rounded"
                 >
                   Edit
+                </button>
+
+                {/* DELETE BUTTON */}
+                <button
+                  onClick={() => handleDelete(t._id)}
+                  className="text-[10px] px-2 py-0.5 bg-red-700 hover:bg-red-600 rounded"
+                >
+                  Delete
                 </button>
               </div>
             </div>
@@ -202,6 +216,9 @@ const AssignTask = () => {
 
                 <span className="px-2 py-0.5 rounded-full bg-slate-800">
                   {normalizeStatus(t.status)}
+                </span>
+                <span className="text-[10px] px-2 py-0.5 bg-slate-800 rounded">
+                  {t.priority}
                 </span>
               </div>
             </div>
@@ -285,11 +302,7 @@ const AssignTask = () => {
                 disabled={loading}
                 className="px-3 py-1 bg-sky-500 text-slate-900 rounded font-semibold"
               >
-                {loading
-                  ? "Saving..."
-                  : isEdit
-                    ? "Update Task"
-                    : "Assign Task"}
+                {loading ? "Saving..." : isEdit ? "Update Task" : "Assign Task"}
               </button>
             </div>
           </form>
